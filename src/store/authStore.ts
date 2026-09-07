@@ -109,8 +109,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.removeItem('refreshToken');
         set({ user: null, token: null, isAuthenticated: false, isLoading: false });
       } else {
-        // Server down / Network error / 5xx error: keep token & authenticated state
-        set({ token, isAuthenticated: true, isLoading: false });
+        // Server down / Network error / 5xx: keep token only if we already have a user (offline), otherwise stay unauthenticated
+        const prevUser = useAuthStore.getState().user;
+        if (prevUser) {
+          set({ token, isAuthenticated: true, isLoading: false });
+        } else {
+          set({ token, isAuthenticated: false, isLoading: false });
+        }
       }
     }
   },
