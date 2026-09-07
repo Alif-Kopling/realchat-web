@@ -37,6 +37,44 @@ if (Capacitor.isNativePlatform()) {
         window.history.back();
       }
     });
+
+    // Handle OAuth deep link: com.hallowok.app://auth/callback?token=...
+    // Closes Custom Tab, stores tokens, syncs auth, navigates to app root.
+    App.addListener('appUrlOpen', async ({ url }) => {
+      try {
+        const parsed = new URL(url);
+        if (parsed.hostname !== 'auth' || !parsed.pathname.startsWith('/callback')) return;
+
+        // Close the in-app browser if still open
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.close();
+        } catch {}
+
+        const token = parsed.searchParams.get('token');
+        const refreshToken = parsed.searchParams.get('refreshToken');
+        const error = parsed.searchParams.get('error');
+
+        if (error || !token) {
+          window.location.hash = '#/login';
+          window.location.href = '/login' + (error ? `?error=${error}` : '');
+          return;
+        }
+
+        localStorage.setItem('accessToken', token);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+
+        const { getMe } = await import('@/services/auth');
+        const user = await getMe();
+        const { useAuthStore } = await import('@/store/authStore');
+        useAuthStore.setState({ user, token, isAuthenticated: true, isLoading: false });
+
+        // Auto-sync: go to home, let ProtectedRoute/AppLayout handle modal close
+        window.location.href = '/';
+      } catch (e) {
+        console.error('appUrlOpen handling failed', e);
+      }
+    });
   });
 }
 
