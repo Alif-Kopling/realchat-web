@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.hallowok.app',
-  appName: 'Hallowok Beta Version',
+  appName: 'hallowok',
   webDir: 'dist',
   server: {
     androidScheme: 'https',
