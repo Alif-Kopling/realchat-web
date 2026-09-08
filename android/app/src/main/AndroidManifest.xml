@@ -46,4 +46,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- OneSignal FCM: required for Android 13+ push permission -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

@@ -7,8 +7,8 @@ import './styles/globals.css';
 
 // Bersihkan service worker legacy/sw.js yang sudah tidak dipakai dan bisa
 // menghalangi pembuatan push subscription token. Satu-satunya SW yang benar
-// untuk OneSignal v16 adalah OneSignalSDKWorker.js.
-if ('serviceWorker' in navigator) {
+// untuk OneSignal v16 adalah OneSignalSDKWorker.js. JANGAN jalankan di native.
+if (!Capacitor.isNativePlatform() && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => {
     regs.forEach((reg) => {
       if (reg.active && reg.active.scriptURL.endsWith('/OneSignalSDKWorker.js')) return;
@@ -17,14 +17,24 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-void initOneSignal().then(() => {
-  window.setTimeout(() => {
-    void promptPushSubscribe(true);
-    void diagnosePushSupport();
-  }, 3000);
-});
+// Web push (browser/PWA) — skip di native, native pakai onesignal.native.ts via OneSignal Cordova plugin
+if (!Capacitor.isNativePlatform()) {
+  void initOneSignal().then(() => {
+    window.setTimeout(() => {
+      void promptPushSubscribe(true);
+      void diagnosePushSupport();
+    }, 3000);
+  });
+}
 
 if (Capacitor.isNativePlatform()) {
+  // OneSignal native init — must run before auth, handles FCM token via google-services.json
+  import('./services/onesignal.native').then(({ initNativeOneSignal, requestNativePermission }) => {
+    void initNativeOneSignal().then(() => {
+      window.setTimeout(() => void requestNativePermission(), 2500);
+    });
+  });
+
   import('@capacitor/status-bar').then(({ StatusBar, Style }) => {
     StatusBar.setOverlaysWebView({ overlay: true });
     StatusBar.setStyle({ style: Style.Dark });
