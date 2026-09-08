@@ -1,8 +1,7 @@
-import { X, Users, MessageSquareText, Info } from 'lucide-react';
+import { X, Users, MessageSquareText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { resolveFileUrl } from '@/lib/url';
-import { DM_USER_MAP, type ChatConversation } from '@/services/chat';
+import type { ChatConversation } from '@/services/chat';
 
 interface AvatarPreviewModalProps {
   chat: ChatConversation;
@@ -14,7 +13,6 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
   const isGroup = chat.type === 'group';
   const avatarUrl = chat.avatarUrl ? resolveFileUrl(chat.avatarUrl) : undefined;
   const initial = chat.name ? chat.name.charAt(0).toUpperCase() : 'U';
-  const resolvedUserId = !isGroup ? (chat.userId || DM_USER_MAP[chat.id] || null) : null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
@@ -49,7 +47,7 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
           </div>
         </div>
 
-        {/* Actions: chat || info */}
+        {/* Actions: chat only */}
         <div className="flex border-t border-border bg-card">
           <button
             onClick={() => {
@@ -57,30 +55,10 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
               if (isGroup) navigate(`/chat/${chat.id}`);
               else navigate(`/dm/${chat.id}`, { state: { name: chat.name } });
             }}
-            className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
+            className="flex w-full items-center justify-center gap-2 py-3 text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
           >
             <MessageSquareText size={16} />
             chat
-          </button>
-          <div className="w-px bg-border" />
-          <button
-            onClick={() => {
-              onClose();
-              if (isGroup) {
-                navigate(`/chat/${chat.id}`);
-                return;
-              }
-              if (resolvedUserId) {
-                navigate(`/profile/${resolvedUserId}`, { state: { from: '/' } });
-              } else {
-                toast.error('Profile not available');
-                navigate(`/dm/${chat.id}`, { state: { name: chat.name } });
-              }
-            }}
-            className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium text-foreground hover:bg-accent/10 transition-colors"
-          >
-            <Info size={16} className="text-muted-foreground" />
-            info
           </button>
         </div>
       </div>
