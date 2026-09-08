@@ -21,18 +21,7 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
         className="relative z-10 w-full max-w-[320px] overflow-hidden rounded-2xl bg-card shadow-2xl animate-[scale-in_0.2s_ease-out]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with close */}
-        <div className="absolute right-2 top-2 z-20">
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur hover:bg-black/60 transition-colors"
-            aria-label="Close preview"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Image */}
+        {/* Image with name overlay on top */}
         <div className="relative flex aspect-square w-full items-center justify-center bg-muted overflow-hidden">
           {avatarUrl ? (
             <img src={avatarUrl} alt={chat.name} className="h-full w-full object-cover" />
@@ -45,17 +34,20 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
               )}
             </div>
           )}
+          {/* Top bar: name inside photo */}
+          <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 bg-gradient-to-b from-black/60 to-transparent px-3 py-3">
+            <p className="truncate text-[15px] font-semibold text-white drop-shadow">{chat.name}</p>
+            <button
+              onClick={onClose}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur hover:bg-black/60 transition-colors"
+              aria-label="Close preview"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
-        {/* Footer info */}
-        <div className="bg-card px-4 py-3">
-          <p className="truncate text-[15px] font-semibold text-foreground">{chat.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {isGroup ? `${chat.members ?? 0} members · Group` : 'Tap to view profile'}
-          </p>
-        </div>
-
-        {/* Actions */}
+        {/* Actions: chat || info */}
         <div className="flex border-t border-border bg-card">
           <button
             onClick={() => {
@@ -66,7 +58,7 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
             className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
           >
             <MessageSquareText size={16} />
-            {isGroup ? 'Open chat' : 'Chat'}
+            chat
           </button>
           <div className="w-px bg-border" />
           <button
@@ -74,15 +66,11 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
               onClose();
               if (isGroup) navigate(`/chat/${chat.id}`);
               else navigate(`/profile/${chat.userId ?? chat.id}`, { state: { from: '/' } });
-              // For DM we can also navigate to profile, for group to chat detail
-              if (!isGroup && chat.userId) {
-                // fallback navigate to profile if userId exists, else dm
-              }
             }}
             className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium text-foreground hover:bg-accent/10 transition-colors"
           >
             <Users size={16} className="text-muted-foreground" />
-            View
+            info
           </button>
         </div>
       </div>
