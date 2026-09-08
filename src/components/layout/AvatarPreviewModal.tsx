@@ -1,7 +1,8 @@
 import { X, Users, MessageSquareText, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { resolveFileUrl } from '@/lib/url';
-import type { ChatConversation } from '@/services/chat';
+import { DM_USER_MAP, type ChatConversation } from '@/services/chat';
 
 interface AvatarPreviewModalProps {
   chat: ChatConversation;
@@ -13,6 +14,7 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
   const isGroup = chat.type === 'group';
   const avatarUrl = chat.avatarUrl ? resolveFileUrl(chat.avatarUrl) : undefined;
   const initial = chat.name ? chat.name.charAt(0).toUpperCase() : 'U';
+  const resolvedUserId = !isGroup ? (chat.userId || DM_USER_MAP[chat.id] || null) : null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
@@ -64,8 +66,16 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
           <button
             onClick={() => {
               onClose();
-              if (isGroup) navigate(`/chat/${chat.id}`);
-              else navigate(`/profile/${chat.userId ?? chat.id}`, { state: { from: '/' } });
+              if (isGroup) {
+                navigate(`/chat/${chat.id}`);
+                return;
+              }
+              if (resolvedUserId) {
+                navigate(`/profile/${resolvedUserId}`, { state: { from: '/' } });
+              } else {
+                toast.error('Profile not available');
+                navigate(`/dm/${chat.id}`, { state: { name: chat.name } });
+              }
             }}
             className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium text-foreground hover:bg-accent/10 transition-colors"
           >
