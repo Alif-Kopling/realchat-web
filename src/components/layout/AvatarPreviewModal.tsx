@@ -1,4 +1,4 @@
-import { X, Users, MessageSquareText } from 'lucide-react';
+import { X, Users, MessageSquareText, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { resolveFileUrl } from '@/lib/url';
 import type { ChatConversation } from '@/services/chat';
@@ -69,7 +69,7 @@ export default function AvatarPreviewModal({ chat, onClose }: AvatarPreviewModal
             }}
             className="flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium text-foreground hover:bg-accent/10 transition-colors"
           >
-            <Users size={16} className="text-muted-foreground" />
+            <Info size={16} className="text-muted-foreground" />
             info
           </button>
         </div>
