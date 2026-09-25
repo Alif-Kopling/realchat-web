@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -104,6 +103,29 @@ export default function CustomSelect({ value, onChange, options, placeholder, di
     setOpen(false);
   };
 
+  const handleToggle = () => {
+    const willOpen = !open;
+    if (willOpen && !isMobile && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const popoverWidth = Math.max(rect.width, 180);
+      const gap = 8;
+      const margin = 16;
+      let left = rect.right - popoverWidth;
+      if (left < margin) left = margin;
+      if (left + popoverWidth > window.innerWidth - margin) left = window.innerWidth - popoverWidth - margin;
+      let top = rect.bottom + gap;
+      const estimatedHeight = options.length * 40 + 12;
+      const willOverflowBottom = top + estimatedHeight > window.innerHeight - margin;
+      if (willOverflowBottom) {
+        const topAbove = rect.top - gap - estimatedHeight;
+        if (topAbove > margin) top = topAbove;
+        else top = Math.max(margin, window.innerHeight - estimatedHeight - margin);
+      }
+      setPos({ top, left, width: popoverWidth });
+    }
+    setOpen(willOpen);
+  };
+
   return (
     <>
       <button
@@ -112,7 +134,7 @@ export default function CustomSelect({ value, onChange, options, placeholder, di
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         className={cn(
           'inline-flex items-center justify-between gap-2 rounded-lg border bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-all focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50',
           open ? 'border-accent/40 bg-card ring-1 ring-accent/20' : 'border-border/50 hover:border-border hover:bg-card/80',
@@ -122,23 +144,60 @@ export default function CustomSelect({ value, onChange, options, placeholder, di
         <ChevronDown size={12} className={cn('shrink-0 text-muted-foreground transition-transform duration-200', open && 'rotate-180 text-foreground')} />
       </button>
 
-      <AnimatePresence>
-        {open &&
-          !isMobile &&
-          pos &&
-          createPortal(
-            <>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/15 backdrop-blur-[1px]" onClick={() => setOpen(false)} />
-              <motion.div
-                ref={popoverRef}
-                role="listbox"
-                initial={{ opacity: 0, scale: 0.97, y: 4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.97, y: 4 }}
-                transition={{ duration: 0.15, ease: 'easeOut' }}
-                style={{ top: pos.top, left: pos.left, width: pos.width }}
-                className="fixed z-50 rounded-xl border border-border/50 bg-popover/95 p-1.5 shadow-2xl backdrop-blur-xl"
-              >
+      {open &&
+        !isMobile &&
+        pos &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-40 bg-black/15 backdrop-blur-[1px]" onClick={() => setOpen(false)} />
+            <div
+              ref={popoverRef}
+              role="listbox"
+              style={{ top: pos.top, left: pos.left, width: pos.width }}
+              className="fixed z-50 rounded-xl border border-border/50 bg-popover/95 p-1.5 shadow-2xl backdrop-blur-xl animate-[scale-in_0.15s_ease-out]"
+            >
+              {options.map((opt) => {
+                const isSelected = opt.value === value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => handleSelect(opt.value)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors',
+                      isSelected ? 'bg-accent text-accent-foreground shadow-sm' : 'text-foreground hover:bg-accent/10',
+                    )}
+                  >
+                    <span>{opt.label}</span>
+                    {isSelected && <Check size={14} className="shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </>,
+          document.body,
+        )}
+
+      {open &&
+        isMobile &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
+            <div
+              ref={sheetRef}
+              role="listbox"
+              className="fixed bottom-0 left-0 right-0 z-50 max-h-[60vh] overflow-y-auto rounded-t-[20px] border-t border-border bg-card px-4 pb-[calc(16px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-20px_60px_rgba(0,0,0,0.5)] animate-[slide-up_0.25s_ease-out]"
+            >
+              <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-muted-foreground/30" />
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Select option</h3>
+                <button onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="space-y-1.5 pb-2">
                 {options.map((opt) => {
                   const isSelected = opt.value === value;
                   return (
@@ -149,75 +208,20 @@ export default function CustomSelect({ value, onChange, options, placeholder, di
                       aria-selected={isSelected}
                       onClick={() => handleSelect(opt.value)}
                       className={cn(
-                        'flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors',
-                        isSelected ? 'bg-accent text-accent-foreground shadow-sm' : 'text-foreground hover:bg-accent/10',
+                        'flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-left text-sm font-medium transition-colors',
+                        isSelected ? 'bg-accent text-accent-foreground shadow-sm' : 'bg-muted/40 text-foreground active:bg-accent/10',
                       )}
                     >
                       <span>{opt.label}</span>
-                      {isSelected && <Check size={14} className="shrink-0" />}
+                      {isSelected && <Check size={18} className="shrink-0" />}
                     </button>
                   );
                 })}
-              </motion.div>
-            </>,
-            document.body,
-          )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {open &&
-          isMobile &&
-          createPortal(
-            <>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
-              <motion.div
-                ref={sheetRef}
-                role="listbox"
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                exit={{ y: '100%' }}
-                transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                drag="y"
-                dragConstraints={{ top: 0 }}
-                dragElastic={0.2}
-                onDragEnd={(_e, info) => {
-                  if (info.offset.y > 80) setOpen(false);
-                }}
-                className="fixed bottom-0 left-0 right-0 z-50 max-h-[60vh] overflow-y-auto rounded-t-[20px] border-t border-border bg-card px-4 pb-[calc(16px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-20px_60px_rgba(0,0,0,0.5)]"
-              >
-                <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-muted-foreground/30" />
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Select option</h3>
-                  <button onClick={() => setOpen(false)} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/10 hover:text-foreground">
-                    <X size={16} />
-                  </button>
-                </div>
-                <div className="space-y-1.5 pb-2">
-                  {options.map((opt) => {
-                    const isSelected = opt.value === value;
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        onClick={() => handleSelect(opt.value)}
-                        className={cn(
-                          'flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-left text-sm font-medium transition-colors',
-                          isSelected ? 'bg-accent text-accent-foreground shadow-sm' : 'bg-muted/40 text-foreground active:bg-accent/10',
-                        )}
-                      >
-                        <span>{opt.label}</span>
-                        {isSelected && <Check size={18} className="shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            </>,
-            document.body,
-          )}
-      </AnimatePresence>
+              </div>
+            </div>
+          </>,
+          document.body,
+        )}
     </>
   );
 }
