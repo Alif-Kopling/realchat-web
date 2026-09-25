@@ -368,17 +368,19 @@ function MessageBubbleComp({
                     ) : (
                       <>
                         <video
-                          src={resolveFileUrl(msg.fileUrl)}
+                          src={`${resolveFileUrl(msg.fileUrl)}#t=0.1`}
+                          muted
                           playsInline
                           controls={false}
+                          disablePictureInPicture
                           onPlay={(e) => e.currentTarget.pause()}
                           onClick={(e) => { e.stopPropagation(); onClickImage(resolveFileUrl(msg.fileUrl)!, msg.fileName, msg.mimeType); }}
                           onError={() => {
                             console.error('[hallo-wok] Video load failed:', resolveFileUrl(msg.fileUrl), 'raw:', msg.fileUrl);
                             setMediaError(true);
                           }}
-                          className="block w-full cursor-pointer"
-                          style={{ maxHeight: '400px' }}
+                          className="block w-full cursor-pointer bg-black object-cover"
+                          style={{ maxHeight: '400px', minHeight: '180px' }}
                           preload="metadata"
                         />
                         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15">
@@ -416,17 +418,19 @@ function MessageBubbleComp({
                   ) : (
                     <>
                       <video
-                        src={resolveFileUrl(msg.fileUrl)}
+                        src={`${resolveFileUrl(msg.fileUrl)}#t=0.1`}
+                        muted
                         playsInline
                         controls={false}
+                        disablePictureInPicture
                         onPlay={(e) => e.currentTarget.pause()}
                         onClick={(e) => { e.stopPropagation(); onClickImage(resolveFileUrl(msg.fileUrl)!, msg.fileName, msg.mimeType); }}
                         onError={() => {
                           console.error('[hallo-wok] Video load failed:', resolveFileUrl(msg.fileUrl), 'raw:', msg.fileUrl);
                           setMediaError(true);
                         }}
-                        className="block w-full cursor-pointer"
-                        style={{ maxHeight: '400px' }}
+                        className="block w-full cursor-pointer bg-black object-cover"
+                        style={{ maxHeight: '400px', minHeight: '180px' }}
                         preload="metadata"
                       />
                       <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/15">
